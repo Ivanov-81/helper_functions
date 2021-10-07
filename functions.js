@@ -70,6 +70,26 @@ function guid() {
     return _p8() + _p8(true) + _p8(true) + _p8();
 }
 
+/**
+ * Конвертирование объекта в Blob для передачи на серввер
+ */
 function objectToJsonBlob(data) {
     return new Blob([JSON.stringify(data)], { type: "application/json" })
+}
+
+
+/**
+ * Склонение числительныйх пример pluralize(number, ['найдена', 'найдено', 'найдены']);
+ * Первый элемент title —
+ *  когда число заканчивается на 1,
+ *  второй - когда число заканчивается на 2,
+ *  третий — когда число заканчивается на 0
+ * @param number
+ * @param titles
+ * @returns {*}
+ */
+function pluralize(number, titles) {
+    var cases = [2, 0, 1, 1, 1, 2];
+    number = String(number).replace(/\D+/g, "");
+    return titles[number % 100 > 4 && number % 100 < 20 ? 2 : cases[number % 10 < 5 ? number % 10 : 5]];
 }
