@@ -11,7 +11,7 @@
         "build-production": "webpack -p",
         "lint": "eslint src/**/*.js",
         "watch": "webpack --watch",
-        "watch-single": "webpack --config=webpack_single.config.js --watch",
+        "watch-single": "webpack --config=webpack_single.config.js --watch --names=filter_source",
         "build-single": "webpack --config=webpack_single.config.js --names=filter_source"
     },
     "author": "",
