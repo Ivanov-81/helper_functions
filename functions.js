@@ -94,3 +94,33 @@ function pluralize(number, titles) {
     number = String(number).replace(/\D+/g, "");
     return titles[number % 100 > 4 && number % 100 < 20 ? 2 : cases[number % 10 < 5 ? number % 10 : 5]];
 }
+
+
+/**
+ * Set falsy values in object to null
+ */
+function falsyObjectValuesToNull(inputObj) {
+    var outputObj = {};
+
+    _.each(inputObj, function (value, key) {
+        outputObj[key] = typeof value === "boolean" ? value : value || null;
+    });
+
+    return outputObj;
+}
+
+/**
+ * Create form data for request
+ */
+function createFormData(data) {
+    var formData = new FormData();
+
+    formData.append("contract", data.contract);
+    formData.append("request", data.request);
+
+    if (data.task) {
+        formData.append("task", data.task);
+    }
+
+    return formData;
+}
