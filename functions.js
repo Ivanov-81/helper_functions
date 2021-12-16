@@ -124,3 +124,19 @@ function createFormData(data) {
 
     return formData;
 }
+
+
+/**
+ * Валидация email-а
+ */
+function email(options) {
+    var maxCount = options.value;
+    var email = options.data.trim();
+    var msg = options.message;
+
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+    var isEmail = re.test(String(email).toLowerCase());
+
+    return !isEmail ? msg : null;
+}
