@@ -140,3 +140,18 @@ function email(options) {
 
     return !isEmail ? msg : null;
 }
+
+
+/**
+ * Валидация email
+ * @param mail - электронная почта
+ * @return boolean
+ */
+function checkEmail(mail) {
+    var emailReg = /^\S+@\S+\.\S+$/;
+    if (_.isEmpty(mail)) {
+        return false;
+    }
+    return emailReg.test(mail);
+}
+
