@@ -155,3 +155,85 @@ function checkEmail(mail) {
     return emailReg.test(mail);
 }
 
+
+function getQueryParam(url, param) {
+    var value = url.match(new RegExp("[?&]" + param + "=([^&]*)(&?)", "i"));
+    return value ? value[1] : Boolean(value);
+}
+
+
+
+/**
+ * Получает GET параметры из URL
+ * url - адрес страницы
+ */
+getUrlParameter: function (url) {
+    var queryString = url ? url.split("?")[1] : window.location.search.slice(1);
+
+    var obj = {};
+    if (queryString) {
+        queryString = queryString.split("#")[0];
+        var arr = queryString.split("&");
+        for (var i = 0; i < arr.length; i++) {
+            var a = arr[i].split("=");
+            var paramNum = undefined;
+            var paramName = a[0].replace(/\[\d*\]/, function (v) {
+                paramNum = v.slice(1, -1);
+                return "";
+            });
+            var paramValue = typeof a[1] === "undefined" ? true : a[1];
+
+            paramName = paramName.toLowerCase();
+            paramValue = paramValue.toLowerCase();
+
+            if (obj[paramName]) {
+                if (typeof obj[paramName] === "string") {
+                    obj[paramName] = [obj[paramName]];
+                }
+                if (typeof paramNum === "undefined") {
+                    obj[paramName].push(paramValue);
+                } else {
+                    obj[paramName][paramNum] = paramValue;
+                }
+            } else {
+                obj[paramName] = paramValue;
+            }
+        }
+    }
+
+    return obj;
+},
+
+
+
+/**
+ * Проверка на URL
+ */
+isURL: function (str) {
+    return str.match("((http|https)://)?(www.)?([a-z0-9-]+.)+[a-z]{2,6}");
+},
+
+
+
+/**
+ * Получение полей из формы, если браузер IE
+ */
+formData: function (form) {
+    var data = form.serializeArray(),
+        formData = {};
+
+    data.forEach(function (item) {
+        formData[item.name] = item.value;
+    });
+
+    return formData;
+},
+
+
+
+/**
+ * Форматирования числа по разрядам
+ */
+numberFormatting: function (number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+},
