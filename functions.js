@@ -237,3 +237,23 @@ formData: function (form) {
 numberFormatting: function (number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 },
+
+
+
+/**
+ * Форматирование больших чисел по разрядам
+ * @param {number} value - число для форматирования
+ * @param {boolean} [nbsp] - разделять разряды
+ * @returns {string} - отформатированое число
+ */
+function bigNumberFormat(value, nbsp) {
+    var nbsp = !!_.isUndefined(nbsp);
+    if (_.isNaN(value) || _.isNull(value) || _.isUndefined(value)) {
+        return value;
+    }
+
+    var tpl = nbsp ? "$1&nbsp;" : "$1 ";
+
+    var regEx = /(\d)(?=(\d\d\d)+([^\d]|$))/g;
+    return String(value).replace(regEx, tpl);
+}
