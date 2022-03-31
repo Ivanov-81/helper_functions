@@ -257,3 +257,19 @@ function bigNumberFormat(value, nbsp) {
     var regEx = /(\d)(?=(\d\d\d)+([^\d]|$))/g;
     return String(value).replace(regEx, tpl);
 }
+
+/**
+ * Кастомизация диалогового окна
+ */
+dialogCustomize() {
+    window.dialog.confirm = ((func) => {
+        return function () {
+            this.btnCancel.closest("div").addClass("d-flex");
+            this.btnCancel.css("order", 2);
+            this.btnCancel.removeClass("button_secondary");
+            this.btnCancel.removeAttr("title");
+            this.btnCancel.addClass("button_plain");
+            return func.apply(this, arguments);
+        };
+    })(window.dialog.confirm);
+}
