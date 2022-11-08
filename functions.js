@@ -293,3 +293,25 @@ function bigNumberFormat(value, nbsp) {
     var regEx = /(\d)(?=(\d\d\d)+([^\d]|$))/g;
     return String(value).replace(regEx, tpl);
 }
+
+
+
+/**
+ * Скачивание файла
+ * */
+function getFile() {
+    notification.success({
+        title: "Загрузка файла началась",
+        content: "",
+    });
+
+    var u = "/iblocks/stud_incoming_offer/" + data.initiatorId + "/" + data.id + "/contractFile";
+    var element = document.createElement("a");
+    element.setAttribute("href", u);
+    element.setAttribute("download", data.contractName);
+    element.setAttribute("target", "_blank");
+    element.style.display = "none";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
