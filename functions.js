@@ -315,3 +315,256 @@ function getFile() {
     element.click();
     document.body.removeChild(element);
 }
+
+
+(function () {
+
+    var archive = $("[data-action='archive']", $root);
+    var search = $("input[type='search']", $('[data-content="menu"]'));
+    var timer = null;
+
+    if(search) {
+        search
+            .off('input')
+            .on('input', function () {
+                changeString('_search', $(this).val())
+                if(timer) {
+                    clearTimeout(timer);
+                }
+                timer = setTimeout(function (){
+                    getDataFilter();
+                }, 700)
+            })
+    }
+
+    if(params.get('filter')) {
+        fillCheckboxes();
+        getDataFilter();
+    }
+
+    archive
+        .off('change')
+        .on('change', function () {
+            switchDataInFilter('showArchive', this.checked)
+            getDataFilter();
+        });
+
+    $('form')
+        .off('click')
+        .on('click', function (evt) {
+            var target = $(evt.target);
+            var action = target.data('action');
+            if(action) {
+                switch (action) {
+                    case 'showSpecialityCode': {
+                        showData('specialityCode', target)
+                        break;
+                    }
+                    case 'showAcademicYear': {
+                        showData('academicYear', target)
+                        break;
+                    }
+                    case 'kindCode':
+                    case 'academicYear':
+                    case 'specialityCode': {
+                        if (target.is(':checked')){
+                            setDataInFilter(action, target.val());
+                        } else {
+                            delDataInFilter(action, target.val());
+                        }
+                        getDataFilter();
+                        break;
+                    }
+                    default:
+                        return 'Нет такого действия'
+                }
+            }
+        })
+
+    /**
+     * Заполнение Checkboxes
+     */
+    function fillCheckboxes() {
+        var filter = JSON.parse(params.get('filter'));
+
+        for (var key in filter) {
+            if(key === '_search') {
+                $('input[type=search]').val(filter[key]);
+            }
+            else {
+                if(Array.isArray(filter[key])) {
+                    $('[data-counter="'+key+'"]').attr('data-count', filter[key].length);
+                    filter[key].forEach(function (item) {
+                        $('input[name='+item+']').attr('checked', true);
+                    })
+                }
+            }
+        }
+    }
+
+    /**
+     * Удаление данных
+     */
+    function delDataInFilter(param, val) {
+        var filter = JSON.parse(params.get('filter'));
+        filter[param] = filter[param].filter(function (item) {
+            return item !== val;
+        })
+        $('[data-counter="'+param+'"]').attr('data-count', filter[param].length);
+        params.set('filter', JSON.stringify(filter));
+        window.history.replaceState(null, null, returnURL(params));
+    }
+
+    /**
+     * Переключение switch
+     */
+    function changePage(param, val) {
+        params.set(param, val)
+        window.history.replaceState(null, null, returnURL(params));
+    }
+
+    /**
+     * Переключение switch
+     */
+    function changeString(param, val) {
+        var filter = JSON.parse(params.get('filter'));
+        filter[param] = val;
+        params.set('filter', JSON.stringify(filter));
+        window.history.replaceState(null, null, returnURL(params));
+    }
+
+    /**
+     * Переключение switch
+     */
+    function switchDataInFilter(param, val) {
+        var filter = JSON.parse(params.get('filter'));
+        filter[param] = [val];
+        params.set('filter', JSON.stringify(filter));
+        window.history.replaceState(null, null, returnURL(params));
+    }
+
+    /**
+     * Добавление данных
+     */
+    function setDataInFilter(param, val) {
+        var filter = JSON.parse(params.get('filter'));
+        filter[param].push(val);
+        $('[data-counter="'+param+'"]').attr('data-count', filter[param].length);
+        params.set('filter', JSON.stringify(filter));
+        window.history.replaceState(null, null, returnURL(params));
+    }
+
+    /**
+     * Раскрытие списка
+     */
+    function showData(attr, target) {
+        var $elem = $('[data-content="' + attr + '"]');
+        if ($elem.attr('hidden')) {
+            $elem.removeAttr('hidden');
+            target.text('Скрыть');
+        } else {
+            $elem.attr('hidden', true);
+            target.text('Показать все');
+        }
+    }
+
+    /**
+     * Получение данных с серввера
+     */
+    function paginationFunc(paging) {
+        if (paging.total > paging.pageSize) {
+            var paginationNode = $('[data-content="pagination"]', $root);
+            paginationNode.html(getTemplate('pagination').render({
+                lengthPages: pagination((paging.current + 1), Math.ceil(paging.total / paging.pageSize)),
+                activePage: (paging.current + 1),
+            }));
+
+            $('[data-page]')
+                .off('click')
+                .on('click', function (evt) {
+                    var target = $(evt.target);
+                    changePage('page', target.data('page'));
+                    getDataFilter();
+                })
+
+        }
+
+        function pagination (current, total, delta = 2, tail = 1)   {
+            // Prevent errors
+            if (typeof total !== "number" || !total) {
+                total = 1;
+                console.warn("Pagination: param `total` is required. Autofixed");
+            }
+            if (current > total) {
+                current = total;
+                console.warn("Pagination: param `current` more than `total`. Autofixed");
+            }
+
+            // Pagination parts
+            var lPart = [],
+                rPart = [],
+                Space = ["…"];
+
+            // Make left part (with improve 1 ... 3 4)
+            // Если между (current - delta) и (tail) есть 2 и более пунктов
+            if (current - delta - tail > 2) {
+                var lTail = _.range(1, tail + 1);
+                var lDelta = _.range(current - delta, current);
+                lPart = lPart.concat(lTail, Space, lDelta);
+            } else {
+                lPart = _.range(1, current);
+            }
+
+            // Make right part (with improve 6 7 ... 9)
+            // Если между (current + delta) и (tail) есть 2 и более пунктов
+            if (total - 2 > current + delta + tail - 1) {
+                var rTail = _.range(1 + total - tail, 1 + total);
+                var rDelta = _.range(1 + current, 1 + current + delta);
+                rPart = rPart.concat(rDelta, Space, rTail);
+            } else {
+                rPart = _.range(1 + current, 1 + total);
+            }
+
+            // Additional optimization
+            // If current page + tails + deltas is more pages than total
+            if (1 + (tail + delta) * 2 >= total) {
+                return _.range(1, 1 + total);
+            }
+
+            return [].concat(lPart, current, rPart);
+        }
+    }
+
+    /**
+     * Получение данных с серввера
+     */
+    function getDataFilter() {
+        var url = '/iblocks/_catalog/pis_flat_filter_employer_practice_calendar/data?';
+        var filter = 'filter={"_search":"'+JSON.parse(params.get('filter'))._search+'","academicYear":[' +JSON.parse(params.get('filter')).academicYear + '],"kindCode":[' +JSON.parse(params.get('filter')).kindCode + '],"specialityCode":[' +JSON.parse(params.get('filter')).specialityCode + ']]}';
+        var search = '&page='+(params.get('page') - 1)+'&pageSize='+params.get('pageSize');
+
+        var options = {
+            method: "GET",
+            url: url + encodeURI(filter) + search
+        };
+
+        $.ajax(options).done(function (res) {
+            if (res.result.code === "SUCCESS") {
+                total.text(res.result.paging.total || 0)
+                $card.html(getTemplate('card').render({
+                    practices: res.result.data
+                }));
+                paginationFunc(res.result.paging);
+            }
+        });
+    }
+
+    /**
+     * Возврат строки URL
+     */
+    function returnURL(params) {
+        return window.location.pathname + '?' + params.toString();
+    }
+
+    return null
+}());
