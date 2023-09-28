@@ -239,25 +239,6 @@ numberFormatting: function (number) {
 },
 
 
-
-/**
- * Форматирование больших чисел по разрядам
- * @param {number} value - число для форматирования
- * @param {boolean} [nbsp] - разделять разряды
- * @returns {string} - отформатированое число
- */
-function bigNumberFormat(value, nbsp) {
-    var nbsp = !!_.isUndefined(nbsp);
-    if (_.isNaN(value) || _.isNull(value) || _.isUndefined(value)) {
-        return value;
-    }
-
-    var tpl = nbsp ? "$1&nbsp;" : "$1 ";
-
-    var regEx = /(\d)(?=(\d\d\d)+([^\d]|$))/g;
-    return String(value).replace(regEx, tpl);
-}
-
 /**
  * Кастомизация диалогового окна
  */
@@ -589,3 +570,289 @@ export const snakeToCamelCase = (str) =>{
         .map((item, i) => (i === 0 ? item : `${item[0].toUpperCase()}${item.slice(1)}`))
         .join("");
 }
+
+
+/** Преобразует snake_case в camelCase
+ * @param {string} str - преобразуемая строка
+ * @return {string}
+ */
+export function snakeToCamel(str) {
+    return str.toLowerCase().replace(/([-_][a-z])/g, group =>
+        group
+            .toUpperCase()
+            .replace('-', '')
+            .replace('_', '')
+    );
+}
+
+
+
+
+/**
+ * Генерирует набор страниц для пагинации
+ * @param current {number} - текущая страница
+ * @param total {number} - общее количество страниц
+ * @param delta {number} - размер зазора вокруг текущей страницы
+ * @param tail {number} - размер "хвостов"
+ * @returns {[]}
+ */
+export function pagination(current, total, delta = 2, tail = 1) {
+    // Prevent errors
+    if (typeof total !== "number" || !total) {
+        total = 1;
+        console.warn("Pagination: param `total` is required. Autofixed");
+    }
+    if (current > total) {
+        current = total;
+        console.warn("Pagination: param `current` more than `total`. Autofixed");
+    }
+
+    // Pagination parts
+    var lPart = [],
+        rPart = [],
+        Space = ["…"];
+
+    // Make left part (with improve 1 ... 3 4)
+    // Если между (current - delta) и (tail) есть 2 и более пунктов
+    if (current - delta - tail > 2) {
+        var lTail = _.range(1, tail + 1);
+        var lDelta = _.range(current - delta, current);
+        lPart = lPart.concat(lTail, Space, lDelta);
+    } else {
+        lPart = _.range(1, current);
+    }
+
+    // Make right part (with improve 6 7 ... 9)
+    // Если между (current + delta) и (tail) есть 2 и более пунктов
+    if (total - 2 > current + delta + tail - 1) {
+        var rTail = _.range(1 + total - tail, 1 + total);
+        var rDelta = _.range(1 + current, 1 + current + delta);
+        rPart = rPart.concat(rDelta, Space, rTail);
+    } else {
+        rPart = _.range(1 + current, 1 + total);
+    }
+
+    // Additional optimization
+    // If current page + tails + deltas is more pages than total
+    if (1 + (tail + delta) * 2 >= total) {
+        return _.range(1, 1 + total);
+    }
+
+    return [].concat(lPart, current, rPart);
+}
+
+/**
+ * Блок параллельных AJAX-запросов
+ */
+export const queryAll = (queries) => $.when.apply($, queries);
+
+
+/**
+ * AJAX-запрос
+ */
+export const query = (url, data, method, body, enctype) => {
+    const queryString = data ? "?" + buildQueryString(data) : "";
+
+    const options = {
+        method: method || "GET",
+        url: url + queryString,
+    };
+
+    if (method !== "GET") {
+        options.data = JSON.stringify(body);
+        options.dataType = "JSON";
+        options.contentType = enctype || "application/json";
+    }
+
+    return $.ajax(options);
+};
+
+
+/**
+ * Очищает строку от html тегов
+ * @param {string} str
+ * @return {string}
+ */
+export function clearHTML(str) {
+    let doc = new DOMParser().parseFromString(str, "text/html");
+    return doc.body.textContent || "";
+}
+
+/**
+ * Заменяет в строке теги br на символ переноса строки
+ * @param str
+ * @return {*}
+ */
+export function br2nl(str) {
+    return String(str).replace(/<\s*\/?br\s*[\/]?>/gi, "\n");
+}
+
+/**
+ * Заменяет символы переноса строки
+ * @param {string} str
+ * @param {boolean} replaceMode
+ * @param {boolean} isXhtml
+ * @return {string}
+ */
+export function nl2br(str, replaceMode, isXhtml) {
+    const breakTag = isXhtml ? "<br />" : "<br>";
+    const replaceStr = replaceMode ? "$1" + breakTag : "$1" + breakTag + "$2";
+    return (str + "").replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, replaceStr);
+}
+
+
+
+/**
+ * Обрабатывает строку предотвращая XSS-атаку
+ * @param {string} str - обрабатываемая строка
+ * @return {string}
+ */
+export function sanitize(str) {
+    return _.has(window, "DOMPurify") && _.isFunction(DOMPurify.sanitize)
+        ? DOMPurify.sanitize(str).trim()
+        : str.toString().trim();
+}
+
+
+
+/**
+ * Находит путь по которому подключена искомый файл
+ * @param {string} name - имя файла или подстрока по которой ищем нужный нам путь
+ * @returns {HTMLAnchorElement|null} -
+ */
+export function getPathByJSName(name) {
+    let path;
+    let parser = null;
+    $("script").each((id, item) => {
+        const src = $(item).attr("src");
+        if (src && src.indexOf(name) > -1) {
+            path = src;
+        }
+    });
+
+    if (path) {
+        parser = document.createElement("a");
+        parser.href = path;
+    }
+
+    return parser || null;
+}
+
+
+
+/**
+ * Обрелеяет браузер IE и его версию
+ * @return {boolean|number} - версия браузера или false если это не ослик
+ */
+export function detectIE() {
+    var ua = window.navigator.userAgent;
+
+    var msie = ua.indexOf("MSIE ");
+    if (msie > 0) {
+        // IE 10 or older => return version number
+        return parseInt(ua.substring(msie + 5, ua.indexOf(".", msie)), 10);
+    }
+
+    var trident = ua.indexOf("Trident/");
+    if (trident > 0) {
+        // IE 11 => return version number
+        var rv = ua.indexOf("rv:");
+        return parseInt(ua.substring(rv + 3, ua.indexOf(".", rv)), 10);
+    }
+
+    // other browser
+    return false;
+}
+
+
+
+/**
+ * Делает заглавной первую букву слова
+ * @param string
+ * @return {string}
+ */
+export function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+}
+
+/**
+ * Склонение числительных пример pluralize(number, ['найдена', 'найдено', 'найдены']);
+ * Первый элемент title —
+ *  когда число заканчивается на 1,
+ *  второй - когда число заканчивается на 2,
+ *  третий — когда число заканчивается на 0
+ * @param number
+ * @param titles
+ * @returns {*}
+ */
+export function pluralize(number, titles) {
+    const cases = [2, 0, 1, 1, 1, 2];
+    number = String(number).replace(/\D+/g, "");
+    return titles[number % 100 > 4 && number % 100 < 20 ? 2 : cases[number % 10 < 5 ? number % 10 : 5]];
+}
+
+/**
+ * Сравнение объектов
+ * @param a
+ * @param b
+ * @return {boolean}
+ */
+export function deepEqual(a, b) {
+    if (a === b) {
+        return true;
+    }
+
+    if (a == null || typeof a != "object" || b == null || typeof b != "object") {
+        return false;
+    }
+
+    let propertiesInA = 0,
+        propertiesInB = 0;
+    for (let property in a) {
+        propertiesInA += 1;
+    }
+    for (let property in b) {
+        propertiesInB += 1;
+        if (!(property in a) || !deepEqual(a[property], b[property])) {
+            return false;
+        }
+    }
+    return propertiesInA === propertiesInB;
+}
+
+/**
+ * Перемещает элемент массива на новый индекс, индексы только положительные числа.
+ * @param {array} arr - массив с элементами которого работаем
+ * @param {number} old_index - старый индекс
+ * @param {number} new_index - новый индекс
+ * @return {*}
+ */
+export function array_move(arr, old_index, new_index) {
+    if (new_index >= arr.length) {
+        var k = new_index - arr.length + 1;
+        while (k--) {
+            arr.push(undefined);
+        }
+    }
+    arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
+    return arr;
+}
+
+
+
+/**
+ * Форматирование больших чисел по разрядам
+ * @param {number} value - число для форматирования
+ * @param {boolean} [nbsp] - разделять разряды
+ * @returns {string} - отформатированое число
+ */
+export const bigNumberFormat = function (value, nbsp = false) {
+    if (_.isNaN(value) || _.isNull(value) || _.isUndefined(value) || value === 0) {
+        return String(0);
+    }
+
+    var tpl = nbsp ? "$1&nbsp;" : "$1 ";
+
+    var regEx = /(\d)(?=(\d\d\d)+([^\d]|$))/g;
+    return String(value).replace(regEx, tpl);
+};
