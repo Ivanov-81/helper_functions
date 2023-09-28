@@ -568,3 +568,24 @@ function getFile() {
 
     return null
 }());
+
+
+
+/**
+ * Преобразование строки из camelCase в snake_case
+ */
+export const camelToSnakeCase = (str) => str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+/**
+ * Преобразование строки из snake_case в camelCase
+ */
+export const snakeToCamelCase = (str) =>{
+    if(str?.split("_")?.length<2){
+        return str
+    }
+    return str
+        .toLowerCase()
+        .split("_")
+        .map((item, i) => (i === 0 ? item : `${item[0].toUpperCase()}${item.slice(1)}`))
+        .join("");
+}
